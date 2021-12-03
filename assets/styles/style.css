@@ -5,6 +5,10 @@
   font-family: "Poppins", sans-serif;
 }
 
+:root {
+  font-size: 62.5%;
+}
+
 .testeeee {
   height: 100vh;
   background-color: #777;
@@ -15,7 +19,7 @@
   width: 100%;
   height: 100vh;
   color: white;
-  clip-path: circle(5%);
+  transition: 0.1s linear;
 }
 
 .intro-text {
@@ -24,7 +28,7 @@
 }
 
 .intro-text,
-.music-note {
+.music-note-container {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -32,13 +36,17 @@
   z-index: 1;
 }
 
+.music-note {
+  width: 6rem;
+}
+
 .title {
-  font-size: 5rem;
-  padding-bottom: 1rem;
+  font-size: 7.2rem;
+  margin-bottom: 1.5rem;
 }
 
 .sub-title {
-  font-size: 1.5rem;
+  font-size: 2.2rem;
 }
 
 .blend {
@@ -56,4 +64,35 @@
 
 .second-page {
   height: 100vh;
+  background-color: #6a6b62;
+}
+
+@media screen and (max-width: 980px) {
+  .title {
+    font-size: 6rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .sub-title {
+    font-size: 2rem;
+  }
+
+  .music-note {
+    width: 4rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .title {
+    font-size: 4rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .sub-title {
+    font-size: 1.5rem;
+  }
+
+  .music-note {
+    width: 3rem;
+  }
 }

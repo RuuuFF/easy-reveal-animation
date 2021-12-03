@@ -15,6 +15,7 @@ const ScrollAnimations = [
         trigger: ['.music-note', , 40],
         style: [
           { opacity: 1, end: 0 },
+          { transform: 1, end: 0, type: 'scale(', measure: ')' },
         ]
       },
       {
@@ -28,6 +29,33 @@ const ScrollAnimations = [
         style: [
           { opacity: 0, end: 1 },
         ]
+      },
+    ]
+  },
+
+  {
+    selector: '.second-page',
+    options: {
+      size: 3,
+    },
+    styles: [
+      {
+        trigger: ['.second-page', , 33],
+        style: [
+          { clipPath: 5, end: 75, type: 'circle(', measure: '%)' },
+        ],
+      },
+      {
+        trigger: ['.second-page', 33, 66],
+        style: [
+          { clipPath: 75, end: 5, type: 'circle(', measure: '%)' },
+        ],
+      },
+      {
+        trigger: ['.second-page', 66,],
+        style: [
+          { clipPath: 5, end: 75, type: 'circle(', measure: '%)' },
+        ],
       },
     ]
   },
@@ -52,9 +80,19 @@ const RevealAnimation = {
   },
 
   toggleStyles(styles, scrollPercent) {
+    const selectors = []
+
     for (let { trigger, style } of styles) {
       const [selector, begin = 0, final = 100] = trigger
       const el = document.querySelector(selector)
+
+      let have = true
+
+      if (!selectors.includes(selector)) {
+        selectors.push(selector)
+      } else {
+        have = false
+      }
 
       for (let props of style) {
         const { type = '', end, measure = '' } = props
@@ -63,15 +101,14 @@ const RevealAnimation = {
 
         const value = this.scale(scrollPercent, begin, final, start, end)
 
-        if (begin < scrollPercent && final >= scrollPercent) {
-          el.style[key] = `${type + value + measure}`
-
-        } else if (scrollPercent <= begin) {
-          el.style[key] = `${type + start + measure}`
-
-        } else if (scrollPercent > final) {
-          el.style[key] = `${type + end + measure}`
-
+        if ((scrollPercent >= begin && scrollPercent <= final) || have) {
+          if (scrollPercent <= begin) {
+            el.style[key] = `${type + start + measure}`
+          } else if (scrollPercent >= final) {
+            el.style[key] = `${type + end + measure}`
+          } else (
+            el.style[key] = `${type + value + measure}`
+          )
         }
       }
     }
@@ -90,8 +127,13 @@ const RevealAnimation = {
 
     const scrollPercent = Math.round(this.scale(num, 0, in_max, 0, 100))
 
+    el.style.left = 0
+    el.style.right = 0
+
     if (pinTop <= 0 && pinBottom > elHeight) {
       el.style.position = 'fixed'
+      el.style.top = 0
+      el.style.bottom = 0
     } else if (pinBottom <= elHeight) {
       el.style.position = 'absolute'
       el.style.top = 'auto'
@@ -99,6 +141,7 @@ const RevealAnimation = {
     } else {
       el.style.position = 'absolute'
       el.style.top = 0
+      el.style.bottom = 'auto'
     }
 
     this.toggleStyles(styles, scrollPercent)
@@ -139,6 +182,7 @@ const RevealAnimation = {
     pinEl.className = 'pinned'
 
     this.appendPinEl(el, pinEl, options)
+    this.fixedElement(el, pinEl, styles)
     window.addEventListener('scroll', () => this.fixedElement(el, pinEl, styles))
   },
 
