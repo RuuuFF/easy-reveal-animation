@@ -15,7 +15,7 @@ const ScrollAnimations = [
         trigger: ['.music-note', 0, 40],
         style: [
           { opacity: 1, end: 0 },
-          { transform: 1, end: 0, type: 'scale(', measure: ')' },
+          { transform: ['scale', 1], end: 0 },
         ]
       },
       {
@@ -28,6 +28,7 @@ const ScrollAnimations = [
         trigger: ['.sub-title', 70, 90],
         style: [
           { opacity: 0, end: 1 },
+          { transform: ['translate', -10, 10], end: [0, 0], measure: 'rem' },
         ]
       },
     ]
@@ -65,9 +66,12 @@ const RevealAnimation = {
   scale(num, in_min, in_max, out_min, out_max) {
     let percentage, value;
 
-    if (out_max < out_min) {
+    if (out_max <= out_min) {
       percentage = -((num - in_min) / (in_max - in_min) - 1)
       value = percentage * (out_min - out_max) + out_max
+
+      value = value > out_min ? out_min : value
+      value = value < out_max ? out_max : value
     } else {
       percentage = (num - in_min) / (in_max - in_min)
       value = percentage * (out_max - out_min) + out_min
@@ -105,12 +109,33 @@ const RevealAnimation = {
           if (property === 'clipPath') {
             const [type, startValue] = declaration[Object.keys(declaration)[0]]
 
-            const value = this.scale(scrollRange, begin, final, Number(startValue), end)
+            const value = this.scale(scrollRange, begin, final, Number(startValue), Number(end))
             el.style[property] = `${type}(${value}${measure})`
+          } else if (property === 'transform') {
+
+            const [type] = declaration[Object.keys(declaration)[0]]
+
+            if (type === 'scale') {
+              const [, startValue] = declaration[Object.keys(declaration)[0]]
+              const value = this.scale(scrollRange, begin, final, Number(startValue), Number(end))
+
+              el.style[property] = `${type}(${value})`
+            } else if (type === 'translate') {
+
+              const [, xStart, yStart] = declaration[Object.keys(declaration)[0]]
+              const [xEnd, yEnd] = end
+
+              const xValue = this.scale(scrollRange, begin, final, Number(xStart), Number(xEnd))
+              const yValue = this.scale(scrollRange, begin, final, Number(yStart), Number(yEnd))
+
+
+              el.style[property] = `${type}(${xValue + measure}, ${yValue + measure})`
+
+            }
           } else {
             const startValue = declaration[Object.keys(declaration)[0]]
 
-            const value = this.scale(scrollRange, begin, final, startValue, end)
+            const value = this.scale(scrollRange, begin, final, Number(startValue), Number(end))
             el.style[property] = `${value + measure}`
           }
         }
