@@ -6,13 +6,13 @@ const ScrollAnimations = [
     },
     styles: [
       {
-        trigger: ['.front-page', , 40],
+        trigger: ['.front-page', 0, 40],
         style: [
-          { clipPath: 5, end: 75, type: 'circle(', measure: '%)' },
+          { clipPath: ['circle', 5], end: 75, measure: '%' },
         ],
       },
       {
-        trigger: ['.music-note', , 40],
+        trigger: ['.music-note', 0, 40],
         style: [
           { opacity: 1, end: 0 },
           { transform: 1, end: 0, type: 'scale(', measure: ')' },
@@ -42,19 +42,19 @@ const ScrollAnimations = [
       {
         trigger: ['.second-page', , 33],
         style: [
-          { clipPath: 5, end: 75, type: 'circle(', measure: '%)' },
+          { clipPath: ['circle', 5], end: 75, measure: '%' },
         ],
       },
       {
         trigger: ['.second-page', 33, 66],
         style: [
-          { clipPath: 75, end: 5, type: 'circle(', measure: '%)' },
+          { clipPath: ['circle', 75], end: 5, measure: '%' },
         ],
       },
       {
         trigger: ['.second-page', 66,],
         style: [
-          { clipPath: 5, end: 75, type: 'circle(', measure: '%)' },
+          { clipPath: ['circle', 5], end: 75, measure: '%' },
         ],
       },
     ]
@@ -79,61 +79,58 @@ const RevealAnimation = {
     return value
   },
 
-  toggleStyles(styles, scrollPercent) {
+  checkSelectors(selectors, selector) {
+    if (selectors.includes(selector)) {
+      return false
+    } else {
+      selectors.push(selector)
+      return true
+    }
+  },
+
+  toggleStyles(styles, scrollRange) {
     const selectors = []
 
     for (let { trigger, style } of styles) {
       const [selector, begin = 0, final = 100] = trigger
-      const el = document.querySelector(selector)
+      const contains = this.checkSelectors(selectors, selector)
 
-      let have = true
+      if ((scrollRange >= begin && scrollRange <= final) || contains) {
+        const el = document.querySelector(selector)
 
-      if (!selectors.includes(selector)) {
-        selectors.push(selector)
-      } else {
-        have = false
-      }
+        for (let declaration of style) {
+          const property = Object.keys(declaration)[0]
+          const { end, measure = '' } = declaration
 
-      for (let props of style) {
-        const { type = '', end, measure = '' } = props
-        const key = Object.keys(props)[0]
-        const start = props[Object.keys(props)[0]]
+          if (property === 'clipPath') {
+            const [type, startValue] = declaration[Object.keys(declaration)[0]]
 
-        const value = this.scale(scrollPercent, begin, final, start, end)
+            const value = this.scale(scrollRange, begin, final, Number(startValue), end)
+            el.style[property] = `${type}(${value}${measure})`
+          } else {
+            const startValue = declaration[Object.keys(declaration)[0]]
 
-        if ((scrollPercent >= begin && scrollPercent <= final) || have) {
-          if (scrollPercent <= begin) {
-            el.style[key] = `${type + start + measure}`
-          } else if (scrollPercent >= final) {
-            el.style[key] = `${type + end + measure}`
-          } else (
-            el.style[key] = `${type + value + measure}`
-          )
+            const value = this.scale(scrollRange, begin, final, startValue, end)
+            el.style[property] = `${value + measure}`
+          }
         }
       }
     }
   },
 
   fixedElement(el, pin, styles) {
+    const { top: pinTop, bottom: pinBottom, height: pinHeight } = pin.getBoundingClientRect()
     const { height: elHeight } = el.getBoundingClientRect()
-    const {
-      top: pinTop,
-      bottom: pinBottom,
-      height: pinHeight
-    } = pin.getBoundingClientRect()
-
     const num = -pinTop
     const in_max = pinHeight - elHeight
 
-    const scrollPercent = Math.round(this.scale(num, 0, in_max, 0, 100))
-
-    el.style.left = 0
-    el.style.right = 0
+    const scrollRange = Math.round(this.scale(num, 0, in_max, 0, 100))
 
     if (pinTop <= 0 && pinBottom > elHeight) {
       el.style.position = 'fixed'
       el.style.top = 0
       el.style.bottom = 0
+      this.toggleStyles(styles, scrollRange)
     } else if (pinBottom <= elHeight) {
       el.style.position = 'absolute'
       el.style.top = 'auto'
@@ -143,8 +140,6 @@ const RevealAnimation = {
       el.style.top = 0
       el.style.bottom = 'auto'
     }
-
-    this.toggleStyles(styles, scrollPercent)
   },
 
   applyPinElStyles(el, pinEl, options) {
@@ -154,7 +149,8 @@ const RevealAnimation = {
     pinEl.style.height = `${height * options.size}px`
 
     el.style.position = 'absolute'
-    el.style.top = 0
+    el.style.left = 0
+    el.style.right = 0
   },
 
   appendPinEl(el, pinEl, options) {
