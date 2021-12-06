@@ -1,34 +1,32 @@
 const ScrollAnimations = [
   {
     selector: '.front-page',
-    options: {
-      size: 3,
-    },
+    options: { size: 3 },
     styles: [
       {
         trigger: ['.front-page', 0, 40],
         style: [
-          { clipPath: ['circle', 5], end: 75, measure: '%' },
+          { clipPath: ['circle', 5, 75], measure: '%' },
         ],
       },
       {
         trigger: ['.music-note', 0, 40],
         style: [
-          { opacity: 1, end: 0 },
-          { transform: ['scale', 1], end: 0 },
+          { opacity: [1, 0] },
+          { transform: ['scale', 1, 0] },
         ]
       },
       {
         trigger: ['.title', 50, 70],
         style: [
-          { opacity: 0, end: 1 },
+          { opacity: [0, 1] },
         ]
       },
       {
         trigger: ['.sub-title', 70, 90],
         style: [
-          { opacity: 0, end: 1 },
-          { transform: ['translate', -10, 10], end: [0, 0], measure: 'rem' },
+          { opacity: [0, 1] },
+          { transform: ['translate', -10, 10, 0, 0], measure: 'rem' },
         ]
       },
     ]
@@ -36,26 +34,24 @@ const ScrollAnimations = [
 
   {
     selector: '.second-page',
-    options: {
-      size: 3,
-    },
+    options: { size: 3 },
     styles: [
       {
         trigger: ['.second-page', , 33],
         style: [
-          { clipPath: ['circle', 5], end: 75, measure: '%' },
+          { clipPath: ['circle', 5, 75], measure: '%' },
         ],
       },
       {
         trigger: ['.second-page', 33, 66],
         style: [
-          { clipPath: ['circle', 75], end: 5, measure: '%' },
+          { clipPath: ['circle', 75, 5], measure: '%' },
         ],
       },
       {
-        trigger: ['.second-page', 66,],
+        trigger: ['.second-page', 66, 100],
         style: [
-          { clipPath: ['circle', 5], end: 75, measure: '%' },
+          { clipPath: ['circle', 5, 75], measure: '%' },
         ],
       },
     ]
@@ -101,41 +97,37 @@ const RevealAnimation = {
 
       if ((scrollRange >= begin && scrollRange <= final) || contains) {
         const el = document.querySelector(selector)
+        const callScale = (start, end) => this.scale(scrollRange, begin, final, Number(start), Number(end))
 
         for (let declaration of style) {
           const property = Object.keys(declaration)[0]
-          const { end, measure = '' } = declaration
+          const { measure = '' } = declaration
 
           if (property === 'clipPath') {
-            const [type, startValue] = declaration[Object.keys(declaration)[0]]
+            const [type, start, end = 0] = declaration[Object.keys(declaration)[0]]
+            const value = callScale(start, end)
+            el.style[property] = `${type}(${value + measure})`
 
-            const value = this.scale(scrollRange, begin, final, Number(startValue), Number(end))
-            el.style[property] = `${type}(${value}${measure})`
           } else if (property === 'transform') {
-
             const [type] = declaration[Object.keys(declaration)[0]]
 
-            if (type === 'scale') {
-              const [, startValue] = declaration[Object.keys(declaration)[0]]
-              const value = this.scale(scrollRange, begin, final, Number(startValue), Number(end))
-
-              el.style[property] = `${type}(${value})`
-            } else if (type === 'translate') {
-
-              const [, xStart, yStart] = declaration[Object.keys(declaration)[0]]
-              const [xEnd, yEnd] = end
-
-              const xValue = this.scale(scrollRange, begin, final, Number(xStart), Number(xEnd))
-              const yValue = this.scale(scrollRange, begin, final, Number(yStart), Number(yEnd))
-
+            if (type === 'translate') {
+              const [, xStart, yStart, xEnd, yEnd] = declaration[Object.keys(declaration)[0]]
+              const xValue = callScale(xStart, xEnd)
+              const yValue = callScale(yStart, yEnd)
 
               el.style[property] = `${type}(${xValue + measure}, ${yValue + measure})`
+            } else if (['scale', 'scaleX', 'scaleY', 'rotate'].includes(type)) {
+              const [, start, end] = declaration[Object.keys(declaration)[0]]
+              const value = callScale(start, end)
 
+              el.style[property] = `${type}(${value + measure})`
             }
-          } else {
-            const startValue = declaration[Object.keys(declaration)[0]]
 
-            const value = this.scale(scrollRange, begin, final, Number(startValue), Number(end))
+          } else {
+            const [start, end] = declaration[Object.keys(declaration)[0]]
+            const value = callScale(start, end)
+
             el.style[property] = `${value + measure}`
           }
         }
