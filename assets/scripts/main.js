@@ -1,12 +1,12 @@
-const ScrollAnimations = [
+const RevealAnimations = [
   {
     selector: '.front-page',
-    options: { size: 3 },
+    options: { size: 4 },
     styles: [
       {
         trigger: ['.front-page', 0, 40],
         style: [
-          { clipPath: ['circle', 5, 75], measure: '%' },
+          { 'clip-path': ['circle', 5, 75] },
         ],
       },
       {
@@ -20,13 +20,14 @@ const ScrollAnimations = [
         trigger: ['.title', 50, 70],
         style: [
           { opacity: [0, 1] },
+          { transform: ['translate', -5, -5, 0, 0, 'rem'] },
         ]
       },
       {
         trigger: ['.sub-title', 70, 90],
         style: [
           { opacity: [0, 1] },
-          { transform: ['translate', -10, 10, 0, 0], measure: 'rem' },
+          { transform: ['translate', -5, 5, 0, 0, 'rem'] },
         ]
       },
     ]
@@ -34,24 +35,24 @@ const ScrollAnimations = [
 
   {
     selector: '.second-page',
-    options: { size: 3 },
+    options: { size: 5 },
     styles: [
       {
-        trigger: ['.second-page', , 33],
+        trigger: ['.second-page', , 30],
         style: [
-          { clipPath: ['circle', 5, 75], measure: '%' },
+          { 'clip-path': ['circle', 5, 75] },
         ],
       },
       {
-        trigger: ['.second-page', 33, 66],
+        trigger: ['.second-page', 50, 60],
         style: [
-          { clipPath: ['circle', 75, 5], measure: '%' },
+          { 'clip-path': ['circle', 75, 5] },
         ],
       },
       {
-        trigger: ['.second-page', 66, 100],
+        trigger: ['.second-page', 90, 100],
         style: [
-          { clipPath: ['circle', 5, 75], measure: '%' },
+          { 'clip-path': ['circle', 5, 75] },
         ],
       },
     ]
@@ -59,6 +60,8 @@ const ScrollAnimations = [
 ]
 
 const RevealAnimation = {
+  selectors: [],
+
   scale(num, in_min, in_max, out_min, out_max) {
     let percentage, value;
 
@@ -66,71 +69,83 @@ const RevealAnimation = {
       percentage = -((num - in_min) / (in_max - in_min) - 1)
       value = percentage * (out_min - out_max) + out_max
 
-      value = value > out_min ? out_min : value
-      value = value < out_max ? out_max : value
+      value > out_min ? value = out_min : ''
+      value < out_max ? value = out_max : ''
     } else {
       percentage = (num - in_min) / (in_max - in_min)
       value = percentage * (out_max - out_min) + out_min
 
-      value = value < out_min ? out_min : value
-      value = value > out_max ? out_max : value
+      value < out_min ? value = out_min : ''
+      value > out_max ? value = out_max : ''
     }
 
     return value
   },
 
-  checkSelectors(selectors, selector) {
-    if (selectors.includes(selector)) {
+  transform(el, property, values, callScale) {
+    const list = ['rotate', 'scale', 'scaleX', 'scaleY', 'translateX', 'translateY']
+    const [type] = values
+
+    if (type === 'translate') {
+      const [, xStart, yStart, xEnd, yEnd, measure] = values
+      const x = callScale(xStart, xEnd)
+      const y = callScale(yStart, yEnd)
+
+      el.style[property] = `${type}(${x + measure}, ${y + measure})`
+    } else if (list.includes(type)) {
+      const [, start, end, measure = ''] = values
+      const value = callScale(start, end)
+
+      el.style[property] = `${type}(${value + measure})`
+    }
+  },
+
+  clipPath(el, property, values, callScale) {
+    const [type] = values
+    
+    if (type === 'circle') {
+      const [, start, end, measure = '%'] = values
+      const value = callScale(start, end)
+      el.style[property] = `${type}(${value + measure})`
+    }
+  },
+
+  style(el, style, callScale) {
+    for (let declaration of style) {
+      const property = Object.keys(declaration)[0]
+      const values = declaration[Object.keys(declaration)[0]]
+
+      if (property === 'clipPath' || property === 'clip-path') {
+        this.clipPath(el, property, values, callScale)
+      } else if (property === 'transform') {
+        this.transform(el, property, values, callScale)
+      } else {
+        const [start, end, measure = ''] = values
+        const value = callScale(start, end)
+        el.style[property] = `${value + measure}`
+      }
+    }
+  },
+
+  checkSelectors(selector) {
+    if (this.selectors.includes(selector)) {
       return false
     } else {
-      selectors.push(selector)
+      this.selectors.push(selector)
       return true
     }
   },
 
   toggleStyles(styles, scrollRange) {
-    const selectors = []
-
     for (let { trigger, style } of styles) {
       const [selector, begin = 0, final = 100] = trigger
-      const contains = this.checkSelectors(selectors, selector)
+      const contains = this.checkSelectors(selector)
 
       if ((scrollRange >= begin && scrollRange <= final) || contains) {
         const el = document.querySelector(selector)
         const callScale = (start, end) => this.scale(scrollRange, begin, final, Number(start), Number(end))
 
-        for (let declaration of style) {
-          const property = Object.keys(declaration)[0]
-          const { measure = '' } = declaration
-
-          if (property === 'clipPath') {
-            const [type, start, end = 0] = declaration[Object.keys(declaration)[0]]
-            const value = callScale(start, end)
-            el.style[property] = `${type}(${value + measure})`
-
-          } else if (property === 'transform') {
-            const [type] = declaration[Object.keys(declaration)[0]]
-
-            if (type === 'translate') {
-              const [, xStart, yStart, xEnd, yEnd] = declaration[Object.keys(declaration)[0]]
-              const xValue = callScale(xStart, xEnd)
-              const yValue = callScale(yStart, yEnd)
-
-              el.style[property] = `${type}(${xValue + measure}, ${yValue + measure})`
-            } else if (['scale', 'scaleX', 'scaleY', 'rotate'].includes(type)) {
-              const [, start, end] = declaration[Object.keys(declaration)[0]]
-              const value = callScale(start, end)
-
-              el.style[property] = `${type}(${value + measure})`
-            }
-
-          } else {
-            const [start, end] = declaration[Object.keys(declaration)[0]]
-            const value = callScale(start, end)
-
-            el.style[property] = `${value + measure}`
-          }
-        }
+        this.style(el, style, callScale)
       }
     }
   },
@@ -145,18 +160,16 @@ const RevealAnimation = {
 
     if (pinTop <= 0 && pinBottom > elHeight) {
       el.style.position = 'fixed'
-      el.style.top = 0
-      el.style.bottom = 0
-      this.toggleStyles(styles, scrollRange)
+      el.style.inset = '0px'
     } else if (pinBottom <= elHeight) {
       el.style.position = 'absolute'
-      el.style.top = 'auto'
-      el.style.bottom = 0
+      el.style.inset = 'auto 0px 0px'
     } else {
       el.style.position = 'absolute'
-      el.style.top = 0
-      el.style.bottom = 'auto'
+      el.style.inset = '0px 0px auto'
     }
+
+    this.toggleStyles(styles, scrollRange)
   },
 
   applyPinElStyles(el, pinEl, options) {
@@ -166,8 +179,7 @@ const RevealAnimation = {
     pinEl.style.height = `${height * options.size}px`
 
     el.style.position = 'absolute'
-    el.style.left = 0
-    el.style.right = 0
+    el.style.inset = 'auto 0px'
   },
 
   appendPinEl(el, pinEl, options) {
@@ -199,10 +211,35 @@ const RevealAnimation = {
     window.addEventListener('scroll', () => this.fixedElement(el, pinEl, styles))
   },
 
+  addTransitions(options, styles) {
+    const { duration = 0.1, timing = 'linear', delay = 0 } = options
+
+    for (let { trigger, style } of styles) {
+      const [selector] = trigger
+      const el = document.querySelector(selector)
+
+      let transition = ''
+      
+      for (let [index, declaration] of style.entries()) {
+        const property = Object.keys(declaration)[0]
+        
+        if (index === style.length - 1) {
+          transition += `${property} ${duration}s ${timing} ${delay}s`
+        } else {
+          transition += `${property} ${duration}s ${timing} ${delay}s, `
+        }
+      }
+
+      el.style.transition = transition
+    }
+  },
+
   getElementsInAnimation() {
-    for (let { selector, options, styles } of ScrollAnimations) {
+    for (let { selector, options, styles } of RevealAnimations) {
+      const {  animate = false  } = options
       const elements = document.querySelectorAll(selector)
 
+      animate ? this.addTransitions(options, styles) : ''
       elements.forEach(el => this.createPinElement(el, options, styles))
     }
   },
