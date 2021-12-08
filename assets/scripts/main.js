@@ -40,15 +40,21 @@ const RevealAnimations = [
       {
         trigger: ['.second-page', , 30],
         style: [
-          { 'clip-path': ['circle', 5, 75] },
+          { 'clip-path': ['circle', 5, 100] },
         ],
       },
       {
-        trigger: ['.second-page', 50, 60],
+        trigger: ['.second-page', 50, 70],
         style: [
           { 'clip-path': ['circle', 75, 5] },
         ],
       },
+      // {
+      //   trigger: ['.second-page', 60, 90],
+      //   style: [
+      //     { 'clip-path': ['circle', 5, 5] },
+      //   ],
+      // },
       {
         trigger: ['.second-page', 90, 100],
         style: [
@@ -102,7 +108,7 @@ const RevealAnimation = {
 
   clipPath(el, property, values, callScale) {
     const [type] = values
-    
+
     if (type === 'circle') {
       const [, start, end, measure = '%'] = values
       const value = callScale(start, end)
@@ -112,8 +118,7 @@ const RevealAnimation = {
 
   style(el, style, callScale) {
     for (let declaration of style) {
-      const property = Object.keys(declaration)[0]
-      const values = declaration[Object.keys(declaration)[0]]
+      const [property, values] = Object.entries(declaration)[0]
 
       if (property === 'clipPath' || property === 'clip-path') {
         this.clipPath(el, property, values, callScale)
@@ -127,24 +132,51 @@ const RevealAnimation = {
     }
   },
 
-  checkSelectors(selector) {
-    if (this.selectors.includes(selector)) {
+  checkSelectors(selector, array) {
+    if (array.includes(selector)) {
       return false
     } else {
-      this.selectors.push(selector)
+      array.push(selector)
       return true
     }
   },
 
   toggleStyles(styles, scrollRange) {
-    for (let { trigger, style } of styles) {
+    const multipleSelectors = []
+
+    for (let [index, { trigger, style }] of styles.entries()) {
       const [selector, begin = 0, final = 100] = trigger
-      const contains = this.checkSelectors(selector)
+      const insideRange = scrollRange >= begin && scrollRange <= final
 
-      if ((scrollRange >= begin && scrollRange <= final) || contains) {
-        const el = document.querySelector(selector)
-        const callScale = (start, end) => this.scale(scrollRange, begin, final, Number(start), Number(end))
+      const el = document.querySelector(selector)
+      const unique = this.checkSelectors(selector, multipleSelectors)
+      const firstLoad = this.checkSelectors(selector, this.selectors)
 
+      const callScale = (start, end) => this.scale(scrollRange, begin, final, Number(start), Number(end))
+
+
+
+
+      const nextIndex = index + 1
+      const hasNextIndex = typeof styles[nextIndex] !== 'undefined'
+
+      if (hasNextIndex) {
+        const [nextSelector] = styles[nextIndex].trigger
+
+        if (selector === nextSelector) {
+          if (scrollRange > final) {
+            continue
+          }
+        }
+      }
+
+
+
+
+
+
+
+      if (((insideRange) || unique) || firstLoad) {
         this.style(el, style, callScale)
       }
     }
@@ -219,10 +251,10 @@ const RevealAnimation = {
       const el = document.querySelector(selector)
 
       let transition = ''
-      
+
       for (let [index, declaration] of style.entries()) {
         const property = Object.keys(declaration)[0]
-        
+
         if (index === style.length - 1) {
           transition += `${property} ${duration}s ${timing} ${delay}s`
         } else {
@@ -236,7 +268,7 @@ const RevealAnimation = {
 
   getElementsInAnimation() {
     for (let { selector, options, styles } of RevealAnimations) {
-      const {  animate = false  } = options
+      const { animate = false } = options
       const elements = document.querySelectorAll(selector)
 
       animate ? this.addTransitions(options, styles) : ''
