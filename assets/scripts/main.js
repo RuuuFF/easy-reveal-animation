@@ -37,24 +37,49 @@ const RevealAnimations = [
     selector: '.second-page',
     options: { size: 5 },
     styles: [
+      // {
+      //   trigger: ['.second-page', , 30],
+      //   style: [
+      //     { 'clip-path': ['circle', 5, 75] },
+      //   ],
+      // },
+      // {
+      //   trigger: ['.second-page', 50, 70],
+      //   style: [
+      //     { 'clip-path': ['circle', 75, 5] },
+      //   ],
+      // },
+      // {
+      //   trigger: ['.second-page', 90, 100],
+      //   style: [
+      //     { 'clip-path': ['circle', 5, 75] },
+      //   ],
+      // },
+
       {
-        trigger: ['.second-page', , 30],
+        trigger: ['.second-page', , 10],
         style: [
-          { 'clip-path': ['circle', 5, 100] },
+          { 'clip-path': ['circle', 5, 75] },
         ],
       },
       {
-        trigger: ['.second-page', 50, 70],
+        trigger: ['.second-page', 20, 30],
         style: [
           { 'clip-path': ['circle', 75, 5] },
         ],
       },
-      // {
-      //   trigger: ['.second-page', 60, 90],
-      //   style: [
-      //     { 'clip-path': ['circle', 5, 5] },
-      //   ],
-      // },
+      {
+        trigger: ['.second-page', 50, 60],
+        style: [
+          { 'clip-path': ['circle', 5, 75] },
+        ],
+      },
+      {
+        trigger: ['.second-page', 70, 80],
+        style: [
+          { 'clip-path': ['circle', 75, 5] },
+        ],
+      },
       {
         trigger: ['.second-page', 90, 100],
         style: [
@@ -132,6 +157,17 @@ const RevealAnimation = {
     }
   },
 
+  newFinal(styles, index, selector, final) {
+    for (let [outherIndex, { trigger }] of styles.entries()) {
+      const sameSelector = trigger[0].includes(selector)
+
+      if (sameSelector && outherIndex > index) {
+        const [, outherBegin = 0] = trigger
+        return (outherBegin - final) + final;
+      }
+    }
+  },
+
   checkSelectors(selector, array) {
     if (array.includes(selector)) {
       return false
@@ -146,35 +182,15 @@ const RevealAnimation = {
 
     for (let [index, { trigger, style }] of styles.entries()) {
       const [selector, begin = 0, final = 100] = trigger
-      const insideRange = scrollRange >= begin && scrollRange <= final
 
       const el = document.querySelector(selector)
       const unique = this.checkSelectors(selector, multipleSelectors)
       const firstLoad = this.checkSelectors(selector, this.selectors)
 
+      const newFinal = this.newFinal(styles, index, selector, final) || final
+      const insideRange = scrollRange >= begin && scrollRange <= newFinal
+
       const callScale = (start, end) => this.scale(scrollRange, begin, final, Number(start), Number(end))
-
-
-
-
-      const nextIndex = index + 1
-      const hasNextIndex = typeof styles[nextIndex] !== 'undefined'
-
-      if (hasNextIndex) {
-        const [nextSelector] = styles[nextIndex].trigger
-
-        if (selector === nextSelector) {
-          if (scrollRange > final) {
-            continue
-          }
-        }
-      }
-
-
-
-
-
-
 
       if (((insideRange) || unique) || firstLoad) {
         this.style(el, style, callScale)
