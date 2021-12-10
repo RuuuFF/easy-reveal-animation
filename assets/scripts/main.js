@@ -37,45 +37,14 @@ const RevealAnimations = [
     selector: '.second-page',
     options: { size: 5 },
     styles: [
-      // {
-      //   trigger: ['.second-page', , 30],
-      //   style: [
-      //     { 'clip-path': ['circle', 5, 75] },
-      //   ],
-      // },
-      // {
-      //   trigger: ['.second-page', 50, 70],
-      //   style: [
-      //     { 'clip-path': ['circle', 75, 5] },
-      //   ],
-      // },
-      // {
-      //   trigger: ['.second-page', 90, 100],
-      //   style: [
-      //     { 'clip-path': ['circle', 5, 75] },
-      //   ],
-      // },
-
       {
-        trigger: ['.second-page', , 10],
+        trigger: ['.second-page', , 30],
         style: [
           { 'clip-path': ['circle', 5, 75] },
         ],
       },
       {
-        trigger: ['.second-page', 20, 30],
-        style: [
-          { 'clip-path': ['circle', 75, 5] },
-        ],
-      },
-      {
-        trigger: ['.second-page', 50, 60],
-        style: [
-          { 'clip-path': ['circle', 5, 75] },
-        ],
-      },
-      {
-        trigger: ['.second-page', 70, 80],
+        trigger: ['.second-page', 50, 70],
         style: [
           { 'clip-path': ['circle', 75, 5] },
         ],
@@ -114,7 +83,7 @@ const RevealAnimation = {
   },
 
   transform(el, property, values, callScale) {
-    const list = ['rotate', 'scale', 'scaleX', 'scaleY', 'translateX', 'translateY']
+    const types = ['rotate', 'scale', 'scaleX', 'scaleY', 'translateX', 'translateY']
     const [type] = values
 
     if (type === 'translate') {
@@ -123,7 +92,7 @@ const RevealAnimation = {
       const y = callScale(yStart, yEnd)
 
       el.style[property] = `${type}(${x + measure}, ${y + measure})`
-    } else if (list.includes(type)) {
+    } else if (types.includes(type)) {
       const [, start, end, measure = ''] = values
       const value = callScale(start, end)
 
@@ -163,7 +132,7 @@ const RevealAnimation = {
 
       if (sameSelector && outherIndex > index) {
         const [, outherBegin = 0] = trigger
-        return (outherBegin - final) + final;
+        return (outherBegin - final) + final
       }
     }
   },
@@ -227,7 +196,7 @@ const RevealAnimation = {
     pinEl.style.height = `${height * options.size}px`
 
     el.style.position = 'absolute'
-    el.style.inset = 'auto 0px'
+    el.style.inset = '0px 0px auto'
   },
 
   appendPinEl(el, pinEl, options) {
