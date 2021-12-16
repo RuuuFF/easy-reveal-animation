@@ -19,6 +19,7 @@ body {
   height: 100vh;
   color: white;
   transition: 0.1s linear;
+  clip-path: circle(5%);
 }
 
 .intro-text {
@@ -46,6 +47,10 @@ body {
 
 .sub-title {
   font-size: 2.2rem;
+}
+
+:is(.title, .sub-title) {
+  opacity: 0;
 }
 
 .blend {
