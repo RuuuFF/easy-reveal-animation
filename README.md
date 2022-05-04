@@ -11,5 +11,5 @@ Sedento pela curiosidade, utilizei meus conhecimentos em HTML, CSS e JavaScript 
 # 🖥️ Resultado
 <div align="center">
   <img alt="Easy Review Animation" src="./.github/easy-reveal-animation.gif" width="450px">
-  <p>Confira o resultado: <a href="https://reveal-animation-ruuuff.netlify.app/">Easy Reveal Animation</a></p>
+  <p>Confira o resultado: <a href="https://reveal-animation-ruuuff.netlify.app/">Reveal Animation</a></p>
 </div>
